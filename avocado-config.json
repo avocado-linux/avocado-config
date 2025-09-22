@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://avocado.com/schemas/avocado-config.json",
+  "$id": "https://avocado.com/schemas/avocado-config/1.0.1.json",
   "title": "Avocado Configuration",
   "description": "Configuration schema for Avocado CLI avocado.toml files. Defines project settings, build configurations, dependencies, and provisioning profiles for Avocado OS projects.",
   "type": "object",
