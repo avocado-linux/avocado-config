@@ -1,3 +1,3 @@
-# Avocado Config Schema
+# Avocado Config
 
-JSON Schema for Avocado CLI configuration files.
+JSON Schema that defines an Avocado config.
