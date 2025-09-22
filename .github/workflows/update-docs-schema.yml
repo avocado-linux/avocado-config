@@ -22,6 +22,15 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Version: $VERSION"
 
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create ${{ steps.version.outputs.version }} \
+            --title "Release ${{ steps.version.outputs.version }}" \
+            --generate-notes \
+            --verify-tag
+
       - name: Checkout docs repo
         uses: actions/checkout@v4
         with:
@@ -35,6 +44,7 @@ jobs:
           cd docs-repo
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.DOCS_REPO_TOKEN }}@github.com/peridio/docs.git
 
       - name: Create branch and update schema
         run: |
@@ -42,9 +52,16 @@ jobs:
           BRANCH_NAME="update-avocado-config-schema-${{ steps.version.outputs.version }}"
           git checkout -b "$BRANCH_NAME"
           cp ../avocado-config.json src/schemas/avocado-config.json
-          git add src/schemas/avocado-config.json
-          git commit -m "Update avocado-config schema to v${{ steps.version.outputs.version }}"
-          git push origin "$BRANCH_NAME"
+
+          if ! git diff --quiet; then
+            echo "Schema file has changes, committing..."
+            git add src/schemas/avocado-config.json
+            git commit -m "Update avocado-config schema to ${{ steps.version.outputs.version }}"
+            git push origin "$BRANCH_NAME"
+          else
+            echo "No changes detected in schema file"
+            exit 1
+          fi
 
       - name: Create Pull Request
         env:
@@ -52,13 +69,13 @@ jobs:
         run: |
           cd docs-repo
           gh pr create \
-            --title "Update avocado-config schema to v${{ steps.version.outputs.version }}" \
+            --title "Update avocado-config schema to ${{ steps.version.outputs.version }}" \
             --body "This PR updates the avocado-config schema to version \`${{ steps.version.outputs.version }}\`.
 
           This update was automatically generated from the [avocado-config repository](https://github.com/${{ github.repository }}) when tag \`${{ steps.version.outputs.version }}\` was pushed.
 
           ## Changes
-          - Updated \`src/schemas/avocado-config.json\` with the latest schema from avocado-config v${{ steps.version.outputs.version }}
+          - Updated \`src/schemas/avocado-config.json\` with the latest schema from avocado-config ${{ steps.version.outputs.version }}
 
           ## Source
           - Repository: ${{ github.repository }}
